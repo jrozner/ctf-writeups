@@ -139,15 +139,21 @@ A double free can give us a write primitive that will allow us to write whatever
 
 Ignoring mitigations in place that would prevent the below scenario we can imagine this two chunks in the tcache bin:
 
+```
 tcache bin -> chunk 1 -> chunk 1
+```
 
 The tcache bin holds the pointer for chunk 1 and the fd pointer in chunk 1 points back to itself because we have freed it twice. If we allocate a chunk that the tcache bin can satisfy we'll be able to pull the first copy out of the tcache bin and overwrite the fd pointer that is in the second copy to something we control. The resulting list for the tcache now becomes:
 
+```
 tcache bin -> chunk 1 -> ???
+```
 
 By allocating another chunk that the tcache bin can serve we get to:
 
+```
 tcache bin -> ???
+```
 
 Then one more allocation gives us our write to anywhere we want.
 
@@ -195,8 +201,10 @@ sell(dup)
 
 At this point we've created the double free condition, where chunk 8 has been freed twice, and our heap looks like the following:
 
+```
 tcache bin -> chunk 8 -> chunk 6 -> chunk 5 -> chunk 4 -> chunk 3 -> chunk 2 -> chunk 1
 fastbin -> chunk 8
+```
 
 Next we can setup our write to hijack control flow.
 
@@ -221,7 +229,9 @@ devious(libc.sym.__free_hook)
 
 We've now emptied out the fastbin and rewritten the tcache bin setting up our write.
 
+```
 tcache bin -> chunk 8 -> __free_hook
+```
 
 Performing one more allocation, using `malloc`, we'll take the duplicate copy of chunk 8 out of the tcache leaving the tcache pointing to the __free_hook as the next chunk. You can ignore the value used here for the allocation but it will become important in the next section.
 ```python
