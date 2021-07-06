@@ -1,7 +1,6 @@
 # House of Sice
 
 Event: HSCTF 8
-Category: 
 
 ## Recon
 
